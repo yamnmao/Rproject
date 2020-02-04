@@ -1,0 +1,37 @@
+---
+title: "A21_Pair12"
+output: pdf_document
+---
+#A21_Pair12
+##Build a decision tree from the Manheim data. 
+```{r}
+library(readr)
+library(tidyverse)
+library(rpart)
+library(rpart.plot)
+manheim <- read_csv("/Users/apple/Downloads/manheim.csv")
+
+#outcome ~ predictor1+predictor2+predictor3+ect.
+fit <- rpart(price~miles+model+sale,data=manheim,
+             method="anova")
+pfit<- prune(fit, cp=fit$cptable[which.min(fit$cptable[,"xerror"]),"CP"])
+rpart.plot(fit, type = 4)
+
+manheim$predict <- round(predict(fit),0)
+
+```
+##Plot predicted versus actual price
+```{r}
+library(ggplot2)
+ggplot(manheim)+geom_point(aes(x=miles,y=price,col=model))+
+  geom_point(aes(x=miles,y=predict,col="Predict"))
+  
+ggplot(manheim)+geom_point(aes(x=price,y=predict,col=model))
+
+```
+##Analysis:
+As we see from the graph, the first graph show that the predicted value only showed the middle value of a set of price. There are lots of points deviated from the predicted Value. The second graph shows that the condition of predicted value versus price. For each model, when price goes up, there will be two different predicted value accordingly.
+
+##What parameter do you need to use for rpart()?
+The parameter of miles and model are useful for rpart to predict the price.The decision tree shows that the model of a car is the best paramater for differentiating prices. 
+
