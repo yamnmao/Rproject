@@ -1,0 +1,81 @@
+---
+title: "A22_Pair12"
+output: pdf_document
+---
+#A22_Pair12
+##Build a neural network for the Manheim data with a range of hidden layers and decide which model gives the best fit.
+```{r}
+library(dplyr)
+library(readr)
+library(neuralnet)
+library(ggplot2)
+library(Metrics)
+
+t <- read_csv("/Users/apple/Downloads/manheim.csv")
+
+# First fit a glm
+lm <- lm(price ~ miles + sale + model, data = t)
+summary(lm)
+predict.lm <- round(predict(lm),0)
+MSE.lm <- rmse(t$price,predict.lm)
+
+```
+
+```{r}
+# Recoding
+t$saleCode <- case_when(
+  t$sale == 'Auction' ~1,
+  t$sale == 'Online' ~2
+  )
+t$modelCode <- case_when(
+  t$model == 'X' ~1,
+  t$model == 'Y' ~2,
+  t$model == 'Z' ~3
+  )
+t$sale <- NULL
+t$model <- NULL
+t
+
+```
+
+```{r}
+# Normalize data
+maxs <- apply(t, 2, max)
+mins <- apply(t, 2, min)
+n <- as.data.frame(scale(t, center = mins, scale = maxs - mins))
+```
+
+```{r}
+# Build neural net
+set.seed(2)
+
+for(i in 2:10){net <- neuralnet(price ~ miles + saleCode + modelCode, data = n, hidden
+= i, linear.output = T)
+pr.net <- compute(net, n[,2:4])
+# rescale
+predict.net <- pr.net$net.result*(max(t$price)-min(t$price))+min(t$price)
+MSE.net <- rmse(t$price, predict.net)
+ }
+plot(net)
+```
+
+```{r}
+ # Compare the two models' mean square error
+paste('MSEs for linear regression and neural net ',round(MSE.lm,
+0),round(MSE.net,0))
+paste('Percent difference ', round(((MSE.net - MSE.lm)/MSE.lm*100),2))
+```
+## Compare your result with a general linear model.
+```{r}
+# Graph the findings - -------------
+t <- t %>% mutate(diff = predict.lm - predict.net)
+ggplot(t, aes(x=price)) +
+  geom_point(aes(y=diff, color='Prediction difference')) +
+  geom_point(aes(y=predict.lm, color='Linear model')) +
+  geom_point(aes(y=predict.net,color='Neural net')) +
+  geom_abline(intercept = 0, slope = 1) +
+  xlab('Actual price') +
+  ylab('Predicted price')
+```
+
+##Analysis: The model with 2:10 hidden layers showed a 1415 value of linear regression and 1325 value of neural net. The neutral net is smaller than linear regression. Therefore this model is useful to predict price.

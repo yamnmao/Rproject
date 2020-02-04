@@ -1,0 +1,31 @@
+---
+title: "A23_Pair12"
+output:
+  html_document:
+    df_print: paged
+---
+#A23_Pair12
+##Do a time series analysis of the average daily price.
+```{r}
+library(dplyr)
+library(readr)
+library(lubridate)
+t <- read_csv("/Users/apple/Assignment/Dataset/electricityprices.csv")
+t$Day <- mday(t$timestamp)
+t$Hour <- hour(t$timestamp)
+t$Month <- month(t$timestamp) 
+t$Year <- year(t$timestamp)
+t <-t %>% group_by(Year, Month, Day) %>% summarize(AverageDailyPrice = mean(cost))
+```
+##Use dygraph to produce a plot
+```{r}
+library(dygraphs)
+ts <-  ts(t$AverageDailyPrice,start=c(1),frequency=1)
+head(ts)
+dygraph(ts)
+
+#The eighth day of a month is the 
+```
+##Conclusions:
+The electricity pirces vary depends on different period of a year. The highest price happens in the 6th month, and it might be caused by the summer time.
+
